@@ -15,6 +15,7 @@
 - [Features](#features)
 - [Technologies](#technologies)
 - [Usage Guide](#usage-guide)
+- [Structure](#structure)
 - [Roadmap](#roadmap)
 - [License](#license)
 - [Project Stats](#project-stats)
@@ -165,6 +166,145 @@ The application combines inventory management, recipe suggestion algorithms, and
   - Environmental impact (CO2, water saved)
   - Most cooked recipes
   - Waste reduction trends over time
+
+---
+
+## 🏗️ Structure
+
+### Project structure
+```
+ecocook/
+│
+├── app/
+│   ├── __init__.py              # Flask app factory
+│   ├── models.py                # SQLAlchemy models
+│   ├── forms.py                 # WTForms forms
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── auth.py              # Login/Register routes
+│   │   ├── inventory.py         # Inventory management
+│   │   ├── recipes.py           # Recipe search/display
+│   │   └── shopping.py          # Shopping list
+│   ├── utils/
+│   │   ├── recipe_matcher.py    # Recipe matching algorithm
+│   │   ├── inventory_updater.py # Inventory update logic
+│   │   └── unit_converter.py    # Unit conversion
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   ├── js/
+│   │   │   └── main.js
+│   │   └── images/
+│   └── templates/
+│       ├── base.html            # Base template
+│       ├── auth/
+│       │   ├── login.html
+│       │   └── register.html
+│       ├── inventory/
+│       │   ├── index.html
+│       │   └── add.html
+│       ├── recipes/
+│       │   ├── search.html
+│       │   └── detail.html
+│       └── shopping/
+│           └── list.html
+│
+├── data/
+│   └── recipes.json             # Static recipe database
+│
+├── tests/
+│   ├── test_auth.py
+│   ├── test_inventory.py
+│   └── test_recipes.py
+│
+├── migrations/                   # Flask-Migrate files
+├── config.py                    # Configuration
+├── requirements.txt             # Python dependencies
+├── run.py                       # Application entry point
+└── README.md
+```
+
+### Database schema
+```
+# models.py structure
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    dietary_preferences = db.Column(db.JSON)  # ['vegan', 'gluten-free']
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+class Ingredient(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    name = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    unit = db.Column(db.String(20), nullable=False)
+    expiry_date = db.Column(db.Date, nullable=True)
+    category = db.Column(db.String(50))
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ShoppingList(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    name = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='active')
+
+class ShoppingListItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    list_id = db.Column(db.Integer, db.ForeignKey('shopping_list.id'))
+    ingredient_name = db.Column(db.String(100))
+    quantity = db.Column(db.Float)
+    unit = db.Column(db.String(20))
+    checked = db.Column(db.Boolean, default=False)
+
+class CookingHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    recipe_id = db.Column(db.String(50))  # ID from recipes.json
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+    servings_made = db.Column(db.Integer)
+```
+
+### recipes.json structure
+```
+{
+  "recipes": [
+    {
+      "id": "recipe_001",
+      "name": "Vegetable Stir Fry",
+      "description": "Quick and healthy stir fry",
+      "servings": 4,
+      "prep_time": 15,
+      "cook_time": 10,
+      "difficulty": "easy",
+      "cuisine": "Asian",
+      "dietary_tags": ["vegan", "gluten-free"],
+      "ingredients": [
+        {"name": "broccoli", "quantity": 200, "unit": "g"},
+        {"name": "carrot", "quantity": 2, "unit": "pieces"},
+        {"name": "soy sauce", "quantity": 3, "unit": "tbsp"},
+        {"name": "garlic", "quantity": 3, "unit": "cloves"}
+      ],
+      "instructions": [
+        "Heat oil in a large pan or wok",
+        "Add garlic and stir for 30 seconds",
+        "Add vegetables and stir-fry for 5-7 minutes",
+        "Add soy sauce and cook for 2 more minutes"
+      ],
+      "nutrition": {
+        "calories": 120,
+        "protein": 5,
+        "carbs": 18,
+        "fat": 4
+      },
+      "image_url": "stir_fry.jpg"
+    }
+  ]
+}
+```
 
 ---
 
