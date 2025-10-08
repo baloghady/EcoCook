@@ -11,14 +11,14 @@
 
 ## 📖 Table of Contents
 
-- [About](#about)
-- [Features](#features)
-- [Technologies](#technologies)
-- [Usage Guide](#usage-guide)
-- [Structure](#structure)
-- [Roadmap](#roadmap)
-- [License](#license)
-- [Project Stats](#project-stats)
+- [About](#-about)
+- [Features](#-features)
+- [Technologies](#-technologies)
+- [Usage Guide](#-usage-guide)
+- [Structure](#-structure)
+- [Roadmap](#-roadmap)
+- [License](#-license)
+- [Project Stats](#-project-stats)
 
 ---
 
