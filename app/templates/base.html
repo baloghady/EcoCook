@@ -3,10 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoCook - Login</title>
+    <title>{% block title %}EcoCook - Sustainable Cooking Assistant{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    {% block content %}{% endblock %}
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <header class="bg-green-600 text-white shadow-lg">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <a href="{{ url_for('auth.login') }}" class="text-2xl font-bold flex items-center">
+                    <span class="mr-2">🌱</span>
+                    EcoCook
+                </a>
+
+                <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+
+                <div id="nav-menu" class="hidden md:flex space-x-6">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.login') }}" class="hover:text-green-200 transition">Home</a>
+                    <a href="#" class="hover:text-green-200 transition">Inventory</a>
+                    <a href="#" class="hover:text-green-200 transition">Recipes</a>
+                    <a href="#" class="hover:text-green-200 transition">Shopping List</a>
+                    <a href="#" class="hover:text-green-200 transition">Logout</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="hover:text-green-200 transition">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="hover:text-green-200 transition">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="mobile-menu" class="hidden md:hidden mt-4 space-y-2">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('auth.login') }}" class="block py-2 hover:text-green-200 transition">Home</a>
+                <a href="#" class="block py-2 hover:text-green-200 transition">Inventory</a>
+                <a href="#" class="block py-2 hover:text-green-200 transition">Recipes</a>
+                <a href="#" class="block py-2 hover:text-green-200 transition">Shopping List</a>
+                <a href="#" class="block py-2 hover:text-green-200 transition">Logout</a>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="block py-2 hover:text-green-200 transition">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="block py-2 hover:text-green-200 transition">Register</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="px-4 py-3 rounded-lg mb-2 {% if category == 'error' %}bg-red-100 border border-red-400 text-red-700{% elif category == 'success' %}bg-green-100 border border-green-400 text-green-700{% elif category == 'warning' %}bg-yellow-100 border border-yellow-400 text-yellow-700{% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %}" role="alert">
+                            <span class="block sm:inline">{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 EcoCook. Reducing food waste together. 🌍</p>
+        </div>
+    </footer>
+
+    <script>
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    </script>
 </body>
 </html>
