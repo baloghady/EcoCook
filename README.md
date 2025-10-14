@@ -61,6 +61,7 @@ The application combines inventory management, recipe suggestion algorithms, and
 - **[Python 3.9+](https://www.python.org/)** - Programming language
 - **[Flask 3.0](https://flask.palletsprojects.com/)** - Web framework
 - **[Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/)** - Database ORM
+- **[Flask-Migrate](https://flask-migrate.readthedocs.io/)** - Database migration management
 - **[Flask-Login](https://flask-login.readthedocs.io/)** - User authentication
 - **[Flask-WTF](https://flask-wtf.readthedocs.io/)** - Form handling and validation
 - **[Flask-Bcrypt](https://flask-bcrypt.readthedocs.io/)** - Password hashing
