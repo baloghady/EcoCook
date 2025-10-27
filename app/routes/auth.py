@@ -37,6 +37,7 @@ def register():
         if existing_user:
             flash('Email already registered. Please login.', 'error')
             return render_template('auth/register.html')
+        
 
         password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
         new_user = User(email=email, password_hash=password_hash)
