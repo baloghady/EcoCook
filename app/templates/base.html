@@ -24,11 +24,10 @@
 
                 <div id="nav-menu" class="hidden md:flex space-x-6">
                     {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('auth.login') }}" class="hover:text-green-200 transition">Home</a>
-                    <a href="#" class="hover:text-green-200 transition">Inventory</a>
-                    <a href="#" class="hover:text-green-200 transition">Recipes</a>
-                    <a href="#" class="hover:text-green-200 transition">Shopping List</a>
-                    <a href="#" class="hover:text-green-200 transition">Logout</a>
+                    <a href="{{ url_for('inventory.index') }}" class="hover:text-green-200 transition">Inventory</a>
+                    <a href="{{ url_for('recipes.index') }}" class="hover:text-green-200 transition">Recipes</a>
+                    <a href="{{ url_for('shopping.index') }}" class="hover:text-green-200 transition">Shopping List</a>
+                    <a href="{{ url_for('auth.logout') }}" class="hover:text-green-200 transition">Logout</a>
                     {% else %}
                     <a href="{{ url_for('auth.login') }}" class="hover:text-green-200 transition">Login</a>
                     <a href="{{ url_for('auth.register') }}" class="hover:text-green-200 transition">Register</a>
@@ -38,11 +37,10 @@
 
             <div id="mobile-menu" class="hidden md:hidden mt-4 space-y-2">
                 {% if current_user.is_authenticated %}
-                <a href="{{ url_for('auth.login') }}" class="block py-2 hover:text-green-200 transition">Home</a>
-                <a href="#" class="block py-2 hover:text-green-200 transition">Inventory</a>
-                <a href="#" class="block py-2 hover:text-green-200 transition">Recipes</a>
-                <a href="#" class="block py-2 hover:text-green-200 transition">Shopping List</a>
-                <a href="#" class="block py-2 hover:text-green-200 transition">Logout</a>
+                <a href="{{ url_for('inventory.index') }}" class="block py-2 hover:text-green-200 transition">Inventory</a>
+                <a href="{{ url_for('recipes.index') }}" class="block py-2 hover:text-green-200 transition">Recipes</a>
+                <a href="{{ url_for('shopping.index') }}" class="block py-2 hover:text-green-200 transition">Shopping List</a>
+                <a href="{{ url_for('auth.logout') }}" class="block py-2 hover:text-green-200 transition">Logout</a>
                 {% else %}
                 <a href="{{ url_for('auth.login') }}" class="block py-2 hover:text-green-200 transition">Login</a>
                 <a href="{{ url_for('auth.register') }}" class="block py-2 hover:text-green-200 transition">Register</a>

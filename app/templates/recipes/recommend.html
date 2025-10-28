@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Recipe Recommendations - EcoCook{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold text-gray-800 mb-6">Recipe Recommendations</h1>
+
+<form method="get" class="mb-6 flex gap-4 items-center">
+  <label class="font-medium">Order by:</label>
+  <select name="sort" class="px-3 py-2 border rounded-md">
+    <option value="match" {% if sort == 'match' %}selected{% endif %}>Available Ingredients</option>
+    <option value="expiry" {% if sort == 'expiry' %}selected{% endif %}>Less Wasted Food</option>
+    <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Rating</option>
+  </select>
+  <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Apply</button>
+</form>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {% for rec in recipes %}
+    <div class="bg-white border rounded-lg shadow p-4 flex flex-col">
+      <div class="mb-2">
+        {% if rec.recipe.image_url %}
+          <img src="/static/{{ rec.recipe.image_url }}" alt="{{ rec.recipe.name }}" class="rounded w-full h-40 object-cover mb-2" />
+        {% else %}
+          <div class="bg-gray-100 rounded w-full h-40 flex items-center justify-center text-gray-400">No image</div>
+        {% endif %}
+      </div>
+      <h2 class="text-lg font-bold mb-1">{{ rec.recipe.name|title }}</h2>
+      <div class="mb-1">⭐ {{ rec.recipe.average_rating }} / 5</div>
+      <div class="mb-1">Total Time: {{ rec.recipe.total_time }} min</div>
+      <div class="mb-2">
+        {% if rec.missing_count == 0 %}
+          <span class="px-2 py-1 rounded bg-green-100 text-green-800">All ingredients available</span>
+        {% else %}
+          <span class="px-2 py-1 rounded bg-red-100 text-red-800">{{ rec.missing_count }} missing</span>
+        {% endif %}
+      </div>
+      {% if rec.missing_count > 0 %}
+        <div class="mb-2 text-sm text-gray-700">
+          <span class="font-semibold">Missing:</span>
+          {{ rec.missing_ingredients | join(', ') }}
+        </div>
+      {% endif %}
+      <a href="/recipes/{{ rec.recipe.id }}" class="mt-auto inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">View Details</a>
+    </div>
+  {% else %}
+    <div class="col-span-full px-4 py-3 text-gray-500">No recipes found.</div>
+  {% endfor %}
+</div>
+{% endblock %}

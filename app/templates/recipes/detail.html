@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}{{ recipe.name|title }} - Recipe Details{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
+  <div class="flex flex-col md:flex-row gap-6">
+    <div class="md:w-1/3">
+      {% if recipe.image_url %}
+        <img src="/static/{{ recipe.image_url }}" alt="{{ recipe.name }}" class="rounded w-full h-auto mb-4" />
+      {% else %}
+        <div class="bg-gray-100 rounded w-full h-40 flex items-center justify-center text-gray-400">No image</div>
+      {% endif %}
+    </div>
+    <div class="md:w-2/3">
+      <h2 class="text-2xl font-bold mb-2">{{ recipe.name|title }}</h2>
+      <p class="mb-2 text-gray-700">{{ recipe.description }}</p>
+      <div class="mb-2">
+        <span class="font-semibold">Rating:</span> ⭐ {{ recipe.average_rating }} / 5
+      </div>
+      <div class="mb-2">
+        <span class="font-semibold">Servings:</span> {{ recipe.servings }}
+        <span class="ml-4 font-semibold">Total Time:</span> {{ recipe.total_time }} min
+      </div>
+      <div class="mb-2">
+        <span class="font-semibold">Cuisine:</span> {{ recipe.cuisine }}
+        <span class="ml-4 font-semibold">Difficulty:</span> {{ recipe.difficulty }}
+      </div>
+      {% if recipe.dietary_tags %}
+        <div class="mb-2">
+          <span class="font-semibold">Tags:</span>
+          {% for tag in recipe.dietary_tags %}
+            <span class="px-2 py-1 bg-green-100 text-green-800 rounded mr-1">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  <hr class="my-4" />
+  <h3 class="text-lg font-semibold mb-2">Ingredients</h3>
+  <ul class="mb-4">
+    {% for ri in recipe.ingredients %}
+      <li class="mb-1">
+        <span class="font-medium">{{ ri.ingredient.name|title }}</span>:
+        {{ ri.quantity }} {{ ri.unit }}
+        {% if ri.ingredient.name in missing_ingredients %}
+          <span class="px-2 py-1 bg-red-100 text-red-800 rounded ml-2">Missing</span>
+        {% else %}
+          <span class="px-2 py-1 bg-green-100 text-green-800 rounded ml-2">Available</span>
+        {% endif %}
+        {% if ri.is_optional %}
+          <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded ml-2">Optional</span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  <h3 class="text-lg font-semibold mb-2">Instructions</h3>
+  <ol class="list-decimal list-inside mb-4">
+    {% for step in recipe.instructions %}
+      <li class="mb-2">{{ step }}</li>
+    {% endfor %}
+  </ol>
+  {% if recipe.nutrition %}
+    <h3 class="text-lg font-semibold mb-2">Nutrition</h3>
+    <ul class="mb-4">
+      {% for k, v in recipe.nutrition.items() %}
+        <li>{{ k|title }}: {{ v }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <a href="/recipes/" class="inline-block px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Back to recommendations</a>
+</div>
+{% endblock %}
