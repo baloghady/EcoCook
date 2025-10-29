@@ -3,17 +3,36 @@
 {% block content %}
 <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
     <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Login</h2>
-    <form method="post">
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+
         <div class="mb-4">
-            <label for="email" class="block text-gray-700 font-semibold mb-2">Email address</label>
-            <input type="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" id="email" name="email" placeholder="Enter email" required>
+            {{ form.email.label(class="block text-gray-700 font-semibold mb-2") }}
+            {{ form.email(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" + (" border-red-500" if form.email.errors else ""), placeholder="Enter email") }}
+            {% if form.email.errors %}
+                <div class="mt-1">
+                    {% for error in form.email.errors %}
+                        <p class="text-red-500 text-sm">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
+
         <div class="mb-6">
-            <label for="password" class="block text-gray-700 font-semibold mb-2">Password</label>
-            <input type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" id="password" name="password" placeholder="Password" required>
+            {{ form.password.label(class="block text-gray-700 font-semibold mb-2") }}
+            {{ form.password(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" + (" border-red-500" if form.password.errors else ""), placeholder="Enter password") }}
+            {% if form.password.errors %}
+                <div class="mt-1">
+                    {% for error in form.password.errors %}
+                        <p class="text-red-500 text-sm">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
-        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">Login</button>
+
+        {{ form.submit(class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition") }}
     </form>
+
     <p class="text-center mt-4 text-gray-600">
         Don't have an account? <a href="{{ url_for('auth.register') }}" class="text-green-600 hover:text-green-700 font-semibold">Register here</a>.
     </p>
