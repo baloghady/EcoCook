@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
+from app.forms import IngredientForm
 from app.utils.inventory_service import (
     get_user_inventory,
     get_expiring_items,
@@ -24,45 +25,24 @@ def index():
 @bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        quantity = request.form.get('quantity', '').strip()
-        unit = request.form.get('unit', '').strip()
-        expiry_raw = request.form.get('expiry_date', '').strip()
+    form = IngredientForm()
 
-        if not name or not quantity or not unit:
-            flash('Name, quantity, and unit are required.', 'error')
-            return redirect(url_for('inventory.add'))
-
-        try:
-            qty = float(quantity)
-            if qty <= 0:
-                raise ValueError
-        except ValueError:
-            flash('Quantity must be a positive number.', 'error')
-            return redirect(url_for('inventory.add'))
-
-        expiry_date = None
-        if expiry_raw:
-            try:
-                # Expecting HTML date input format YYYY-MM-DD
-                expiry_date = datetime.strptime(expiry_raw, '%Y-%m-%d').date()
-            except ValueError:
-                flash('Invalid expiry date format.', 'error')
-                return redirect(url_for('inventory.add'))
-
-        ingredient = find_or_create_ingredient(name=name, default_unit=unit)
+    if form.validate_on_submit():
+        ingredient = find_or_create_ingredient(
+            name=form.name.data,
+            default_unit=form.unit.data
+        )
         add_inventory_item(
             user_id=current_user.id,
             ingredient_id=ingredient.id,
-            quantity=qty,
-            unit=unit,
-            expiry_date=expiry_date,
+            quantity=float(form.quantity.data),
+            unit=form.unit.data,
+            expiry_date=form.expiry_date.data,
         )
-        flash('Inventory item added.', 'success')
+        flash('Inventory item added successfully!', 'success')
         return redirect(url_for('inventory.index'))
 
-    return render_template('inventory/add.html')
+    return render_template('inventory/add.html', form=form)
 
 
 @bp.route('/<int:item_id>/delete', methods=['POST'])

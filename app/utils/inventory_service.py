@@ -8,8 +8,6 @@ from app.models import UserInventory, Ingredient
 
 def get_user_inventory(user_id: int) -> List[UserInventory]:
     """Return all inventory items for the given user, ordered by expiry_date (soonest first)."""
-    # Order by expiry date (soonest first), then by created_at; place NULL expiry at the end
-    # Use a portable pattern for SQLite (which lacks NULLS LAST): order by (expiry_date IS NULL), then expiry_date
     return (
         UserInventory.query.filter_by(user_id=user_id)
         .order_by(UserInventory.expiry_date.is_(None), UserInventory.expiry_date.asc(), UserInventory.created_at.asc())
@@ -24,7 +22,7 @@ def get_expiring_items(user_id: int, days: int = 7) -> List[UserInventory]:
     return (
         UserInventory.query.filter(
             UserInventory.user_id == user_id,
-            UserInventory.expiry_date != None,  # noqa: E711
+            UserInventory.expiry_date != None,
             UserInventory.expiry_date <= cutoff,
         )
         .order_by(UserInventory.expiry_date.asc())
@@ -40,7 +38,6 @@ def add_inventory_item(
     expiry_date: Optional[date] = None,
 ) -> UserInventory:
     """Create a new inventory item for the user.
-
     Note: In later iterations we may merge with existing rows of the same ingredient.
     """
     item = UserInventory(
@@ -65,14 +62,15 @@ def delete_inventory_item(user_id: int, item_id: int) -> bool:
     return True
 
 
-def find_or_create_ingredient(name: str, default_unit: str) -> Ingredient:
+def find_or_create_ingredient(name: str, default_unit: str, category: Optional[str] = None) -> Ingredient:
     """Utility: case-insensitive ingredient lookup; create if not found.
     Requires a default_unit when creating a new ingredient, because Ingredient.unit is non-nullable.
+    Optionally accepts a category for new ingredients.
     """
     ing = Ingredient.query.filter(Ingredient.name.ilike(name)).first()
     if ing:
         return ing
-    ing = Ingredient(name=name.strip(), unit=default_unit)
+    ing = Ingredient(name=name.strip(), unit=default_unit, category=category)
     db.session.add(ing)
     db.session.commit()
     return ing
