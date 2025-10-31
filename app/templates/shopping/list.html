@@ -1,0 +1,110 @@
+﻿{% extends 'base.html' %}
+{% block title %}Shopping Lists - EcoCook{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold text-gray-800 mb-6">🛒 My Shopping Lists</h1>
+
+<!-- Create new list -->
+<div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <form action="{{ url_for('shopping.create_list') }}" method="post" class="flex gap-2">
+        <input type="text" name="name" placeholder="New list name"
+               class="border rounded-md px-3 py-2 w-64" required>
+        <button type="submit"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-smooth">
+            + Create
+        </button>
+    </form>
+</div>
+
+<!-- Shopping lists overview -->
+{% if shopping_lists %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for list in shopping_lists %}
+    <div class="bg-white rounded-lg custom-shadow p-5 flex flex-col">
+        <div class="flex justify-between items-start mb-2">
+            <h2 class="text-lg font-bold text-gray-800">{{ list.name }}</h2>
+            {% if list.is_completed %}
+            <span class="px-2 py-1 rounded bg-green-100 text-green-800 text-sm">Completed</span>
+            {% else %}
+            <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-sm">Active</span>
+            {% endif %}
+        </div>
+        <p class="text-sm text-gray-500 mb-3">
+            Created: {{ list.created_at.strftime('%Y-%m-%d') }}
+        </p>
+
+        {% if list.items %}
+        <ul class="divide-y divide-gray-200 mb-4">
+            {% for item in list.items %}
+            <li class="py-2 flex items-center justify-between">
+                <div>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox"
+                               {% if item.is_purchased %}checked{% endif %}
+                               onchange="togglePurchased({{ list.id }}, {{ item.ingredient_id }})"
+                               class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <span class="{% if item.is_purchased %}line-through text-gray-400{% endif %}">
+                            {{ item.ingredient.name|title }} - {{ item.quantity }} {{ item.ingredient.unit }}
+                        </span>
+                    </label>
+                    {% if item.notes %}
+                    <div class="text-sm text-gray-500 ml-6">{{ item.notes }}</div>
+                    {% endif %}
+                </div>
+                <form method="post" action="{{ url_for('shopping.delete_item', list_id=list.id, ingredient_id=item.ingredient_id) }}"
+                      onsubmit="return confirm('Delete this item?')">
+                    <button type="submit" class="text-red-500 hover:text-red-700 text-sm">✕</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-500 mb-4">No items yet. Add ingredients below.</p>
+        {% endif %}
+
+        <!-- Add item -->
+        <form method="post" action="{{ url_for('shopping.add_item', list_id=list.id) }}" class="flex gap-2 mt-auto">
+            <input type="text" name="ingredient_name" placeholder="Ingredient"
+                   class="border rounded-md px-2 py-1 flex-1" required>
+            <input type="number" name="quantity" placeholder="Qty"
+                   class="border rounded-md px-2 py-1 w-20" min="0.1" step="0.1" required>
+            <select name="unit" class="border rounded-md px-2 py-1 w-24" required>
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="ml">ml</option>
+                <option value="l">l</option>
+                <option value="tbsp">tbsp</option>
+                <option value="tsp">tsp</option>
+                <option value="piece">piece</option>
+                <option value="head">head</option>
+                <option value="slices">slices</option>
+                <option value="pinch">pinch</option>
+                <option value="cloves">cloves</option>
+            </select>
+            <button type="submit"
+                    class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-smooth">
+                Add
+            </button>
+        </form>
+
+        <!-- Delete list -->
+        <form method="post" action="{{ url_for('shopping.delete_list', list_id=list.id) }}"
+              onsubmit="return confirm('Delete this list?')" class="mt-4 text-right">
+            <button type="submit" class="text-red-500 hover:text-red-700 text-sm">🗑 Delete List</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-gray-600">You have no shopping lists yet. Create one above to get started!</p>
+{% endif %}
+
+<script>
+  async function togglePurchased(listId, ingredientId) {
+    await fetch(`/shopping/${listId}/toggle/${ingredientId}`, {
+      method: 'POST',
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    });
+  }
+</script>
+{% endblock %}
