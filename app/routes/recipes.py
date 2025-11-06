@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+﻿from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
 from app.models import Recipe, RecipeIngredient, UserInventory
 
@@ -23,6 +23,8 @@ def index():
     elif sort == 'expiry':
         # Placeholder: sort by missing_count for now
         recs.sort(key=lambda r: r['missing_count'])
+    elif sort ==  'all':
+        recs.sort(key=lambda r: r['recipe'].name.lower())
     return render_template('recipes/recommend.html', recipes=recs, sort=sort)
 
 
@@ -38,6 +40,11 @@ def get_missing_ingredients(recipe, user_ingredient_ids):
 
 def get_missing_count(recipe, user_ingredient_ids):
     return sum(1 for ri in recipe.ingredients if ri.ingredient_id not in user_ingredient_ids)
+
+@bp.route('/',endpoint='recipes_home')
+@login_required
+def index():
+    return recommend()
 
 @bp.route('/recommend')
 @login_required
@@ -57,6 +64,8 @@ def recommend():
         recs.sort(key=lambda r: r['recipe'].average_rating, reverse=True)
     elif sort == 'expiry':
         recs.sort(key=lambda r: r['missing_count'])
+    elif sort == 'all':
+        recs.sort(key=lambda r: r['recipe'].name.lower())
     return render_template('recipes/recommend.html', recipes=recs, sort=sort)
 
 @bp.route('/<int:recipe_id>')

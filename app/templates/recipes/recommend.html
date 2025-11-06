@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}Recipe Recommendations - EcoCook{% endblock %}
 {% block content %}
 <h1 class="text-2xl font-semibold text-gray-800 mb-6">Recipe Recommendations</h1>
@@ -6,9 +6,10 @@
 <form method="get" class="mb-6 flex gap-4 items-center">
   <label class="font-medium">Order by:</label>
   <select name="sort" class="px-3 py-2 border rounded-md">
-    <option value="match" {% if sort == 'match' %}selected{% endif %}>Available Ingredients</option>
-    <option value="expiry" {% if sort == 'expiry' %}selected{% endif %}>Less Wasted Food</option>
-    <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Rating</option>
+      <option value="match" {% if sort=='match' %}selected{% endif %}>Available Ingredients</option>
+      <option value="expiry" {% if sort=='expiry' %}selected{% endif %}>Less Wasted Food</option>
+      <option value="rating" {% if sort=='rating' %}selected{% endif %}>Rating</option>
+      <option value="all" {% if sort=='all' %}selected{% endif %}>All Recipe</option>
   </select>
   <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Apply</button>
 </form>

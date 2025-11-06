@@ -1,12 +1,26 @@
-from datetime import datetime
+﻿from datetime import datetime
 from flask_login import UserMixin
 from app.extensions import db
+from enum import Enum
+
+class UnitEnum(Enum):
+    tbsp = "tbsp"
+    ml = "ml"
+    g = "g"
+    piece = "piece"
+    tsp = "tsp"
+    head = "head"
+    slices = "slices"
+    pinch = "pinch"
+    cloves = "cloves"
+    kg = "kg"
+    l = "l"
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    dietary_preferences = db.Column(db.JSON)
+    diet_id = db.Column(db.Integer, db.ForeignKey('dietary_stuff.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     shopping_lists = db.relationship('ShoppingList', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -17,17 +31,30 @@ class User(db.Model, UserMixin):
         return f'<User {self.email}>'
 
 
+class DietaryStuff(db.Model):
+    __tablename__ = 'dietary_stuff'
+    id = db.Column(db.Integer, primary_key=True)
+    diet_name = db.Column(db.String(50), unique=True, nullable=False)
+    diet_description = db.Column(db.String(255))
+
+    #connections (kapcsolatok)
+    users = db.relationship('User',backref='diet', lazy=True)
+    recipes = db.relationship('Recipe', backref='diet', lazy=True)
+
+    def __repr__(self):
+        return f'<DietaryStuff {self.diet_name}>'
+
+
 class Ingredient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     category = db.Column(db.String(50))
-    unit = db.Column(db.String(20), nullable=False)
+    unit = db.Column(db.Enum(UnitEnum), nullable=False)
     carbon_footprint = db.Column(db.Float)
     seasonality = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     shopping_list_items = db.relationship('ShoppingListItem', backref='ingredient', lazy=True)
-    cooking_history_items = db.relationship('CookingHistory', backref='ingredient', lazy=True)
     inventory_items = db.relationship('UserInventory', backref='ingredient', lazy=True)
 
     def __repr__(self):
@@ -49,9 +76,8 @@ class ShoppingList(db.Model):
 
 
 class ShoppingListItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    shopping_list_id = db.Column(db.Integer, db.ForeignKey('shopping_list.id'), nullable=False)
-    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), nullable=False)
+    shopping_list_id = db.Column(db.Integer, db.ForeignKey('shopping_list.id'), primary_key=True)
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), primary_key=True)
     quantity = db.Column(db.Float, nullable=False)
     is_purchased = db.Column(db.Boolean, default=False)
     notes = db.Column(db.Text)
@@ -67,13 +93,15 @@ class UserInventory(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), nullable=False)
     quantity = db.Column(db.Float, nullable=False)
-    unit = db.Column(db.String(20))
     expiry_date = db.Column(db.Date)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
         return f'<UserInventory User:{self.user_id} Ingredient:{self.ingredient_id} Qty:{self.quantity}>'
+
+    def unit(self):
+        return self.ingredient.unit.value
 
     @property
     def days_to_expiry(self):
@@ -95,7 +123,7 @@ class Recipe(db.Model):
     cook_time = db.Column(db.Integer)  # minutes
     difficulty = db.Column(db.String(20))
     cuisine = db.Column(db.String(50))
-    dietary_tags = db.Column(db.JSON)  # ['vegan', 'gluten-free', etc.]
+    diet_id = db.Column(db.Integer, db.ForeignKey('dietary_stuff.id'))  # ['vegan', 'gluten-free', etc.]
     instructions = db.Column(db.JSON)  # List of instruction steps
     nutrition = db.Column(db.JSON)  # Nutrition info dict
     image_url = db.Column(db.String(255))
@@ -122,9 +150,8 @@ class Recipe(db.Model):
 
 
 class RecipeIngredient(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), nullable=False)
-    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), nullable=False)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), primary_key=True)
     quantity = db.Column(db.Float, nullable=False)
     unit = db.Column(db.String(20), nullable=False)
     is_optional = db.Column(db.Boolean, default=False)
@@ -142,8 +169,6 @@ class CookingHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), nullable=True)
-    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), nullable=True)
-    recipe_name = db.Column(db.String(200))  # legacy, for migration
     quantity_used = db.Column(db.Float, nullable=False)
     cooking_date = db.Column(db.DateTime, default=datetime.utcnow)
     carbon_saved = db.Column(db.Float)

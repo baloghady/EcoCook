@@ -1,4 +1,4 @@
-# 🌱 EcoCook - Sustainable Cooking Assistant
+﻿# 🌱 EcoCook - Sustainable Cooking Assistant
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0.0-green.svg)](https://flask.palletsprojects.com/)
@@ -73,7 +73,7 @@ The application combines inventory management, recipe suggestion algorithms, and
 - **JavaScript (Vanilla)** - Client-side interactivity
 
 ### Data & Algorithms
-- **JSON** - Recipe data storage
+- SQL database and JSON
 
 ### Development Tools
 - **Git** - Version control
@@ -227,87 +227,91 @@ ecocook/
 
 ### Database schema
 ```
-# models.py structure
-
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    dietary_preferences = db.Column(db.JSON)  # ['vegan', 'gluten-free']
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    diet_id = db.Column(db.Integer, db.ForeignKey('dietary_stuff.id'))  # FK to diet table
+
+class DietaryStuff(db.Model):
+    __tablename__ = 'dietary_stuff'
+    id = db.Column(db.Integer, primary_key=True)
+    diet_name = db.Column(db.String(50), unique=True, nullable=False)
+    diet_description = db.Column(db.String(255))
+
+class Recipe(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    servings = db.Column(db.Integer)
+    prep_time = db.Column(db.Integer)
+    cook_time = db.Column(db.Integer)
+    difficulty = db.Column(db.String(50))
+    cuisine = db.Column(db.String(50))
+    diet_id = db.Column(db.Integer, db.ForeignKey('dietary_stuff.id'))  # FK to diet table
+    instructions = db.Column(db.Text)
+    nutrition = db.Column(db.JSON)
+    image_url = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    rating_sum = db.Column(db.Integer, default=0)
+    rating_count = db.Column(db.Integer, default=0)
+
 class Ingredient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     name = db.Column(db.String(100), nullable=False)
-    quantity = db.Column(db.Float, nullable=False)
-    unit = db.Column(db.String(20), nullable=False)
-    expiry_date = db.Column(db.Date, nullable=True)
     category = db.Column(db.String(50))
-    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+    unit = db.Column(db.String(20))
+    carbon_footprint = db.Column(db.Float)
+    seasonality = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class RecipeIngredient(db.Model):
+    __tablename__ = 'recipe_ingredient'
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), primary_key=True)
+    quantity = db.Column(db.Float)
+    unit = db.Column(db.String(20))
+    is_optional = db.Column(db.Boolean, default=False)
+
+class UserInventory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'))
+    quantity = db.Column(db.Float)
+    expiry_date = db.Column(db.Date)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
 class ShoppingList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(20), default='active')
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    is_completed = db.Column(db.Boolean, default=False)
 
 class ShoppingListItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    list_id = db.Column(db.Integer, db.ForeignKey('shopping_list.id'))
-    ingredient_name = db.Column(db.String(100))
+    __tablename__ = 'shopping_list_item'
+    list_id = db.Column(db.Integer, db.ForeignKey('shopping_list.id'), primary_key=True)
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), primary_key=True)
     quantity = db.Column(db.Float)
-    unit = db.Column(db.String(20))
-    checked = db.Column(db.Boolean, default=False)
+    is_purchased = db.Column(db.Boolean, default=False)
+    notes = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class CookingHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    recipe_id = db.Column(db.String(50))  # ID from recipes.json
-    date = db.Column(db.DateTime, default=datetime.utcnow)
-    servings_made = db.Column(db.Integer)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'))
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'))
+    quantity_used = db.Column(db.Float)
+    cooking_date = db.Column(db.DateTime, default=datetime.utcnow)
+    carbon_saved = db.Column(db.Float)
+    notes = db.Column(db.String(255))
 ```
 
-### recipes.json structure
-```
-{
-  "recipes": [
-    {
-      "id": "recipe_001",
-      "name": "Vegetable Stir Fry",
-      "description": "Quick and healthy stir fry",
-      "servings": 4,
-      "prep_time": 15,
-      "cook_time": 10,
-      "difficulty": "easy",
-      "cuisine": "Asian",
-      "dietary_tags": ["vegan", "gluten-free"],
-      "ingredients": [
-        {"name": "broccoli", "quantity": 200, "unit": "g"},
-        {"name": "carrot", "quantity": 2, "unit": "pieces"},
-        {"name": "soy sauce", "quantity": 3, "unit": "tbsp"},
-        {"name": "garlic", "quantity": 3, "unit": "cloves"}
-      ],
-      "instructions": [
-        "Heat oil in a large pan or wok",
-        "Add garlic and stir for 30 seconds",
-        "Add vegetables and stir-fry for 5-7 minutes",
-        "Add soy sauce and cook for 2 more minutes"
-      ],
-      "nutrition": {
-        "calories": 120,
-        "protein": 5,
-        "carbs": 18,
-        "fat": 4
-      },
-      "image_url": "stir_fry.jpg"
-    }
-  ]
-}
-```
 
----
 
 ## 🗺️ Roadmap
 
