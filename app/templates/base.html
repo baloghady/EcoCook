@@ -49,16 +49,23 @@
         </nav>
     </header>
 
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-3"></div>
+    <div id="modal-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-200"></div>
+    <div id="modal-dialog" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-lg shadow-2xl p-8 max-w-md w-11/12 transition-all duration-200 scale-95 opacity-0"></div>
+
     <main class="flex-grow container mx-auto px-4 py-8">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="mb-6">
-                    {% for category, message in messages %}
-                        <div class="px-4 py-3 rounded-lg mb-2 {% if category == 'error' %}bg-red-100 border border-red-400 text-red-700{% elif category == 'success' %}bg-green-100 border border-green-400 text-green-700{% elif category == 'warning' %}bg-yellow-100 border border-yellow-400 text-yellow-700{% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %}" role="alert">
-                            <span class="block sm:inline">{{ message }}</span>
-                        </div>
-                    {% endfor %}
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const messages = [
+                            {% for category, message in messages %}
+                                { category: '{{ category }}', message: '{{ message|replace('"', '\\"') }}' },
+                            {% endfor %}
+                        ];
+                        messages.forEach(msg => showToast(msg.message, msg.category));
+                    });
+                </script>
             {% endif %}
         {% endwith %}
 
@@ -80,6 +87,69 @@
                 mobileMenu.classList.toggle('hidden');
             });
         }
+
+        function showToast(message, category = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = category === 'error' ? 'bg-red-500' : category === 'success' ? 'bg-green-500' : category === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
+            const icon = category === 'error' ? '🔴' : category === 'success' ? '✅' : category === 'warning' ? '⚠️' : 'ℹ️';
+            
+            toast.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 max-w-sm transform transition-all duration-300 translate-x-0 opacity-100`;
+            toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-x-96', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function showModal(title, message, buttons) {
+            return new Promise((resolve) => {
+                const backdrop = document.getElementById('modal-backdrop');
+                const dialog = document.getElementById('modal-dialog');
+                
+                let html = `<h2 class="text-xl font-bold mb-4 text-gray-800">${title}</h2>`;
+                html += `<div class="text-gray-600 mb-6 leading-relaxed">${message}</div>`;
+                html += '<div class="flex gap-3 justify-end">';
+                
+                buttons.forEach((btn, idx) => {
+                    const isCancel = btn.type === 'cancel';
+                    const btnClass = isCancel ? 'bg-gray-300 hover:bg-gray-400 text-gray-800' : 'bg-green-600 hover:bg-green-700 text-white';
+                    html += `<button onclick="closeModal(${idx})" class="${btnClass} px-4 py-2 rounded transition">${btn.label}</button>`;
+                });
+                html += '</div>';
+                
+                dialog.innerHTML = html;
+                backdrop.classList.remove('hidden');
+                dialog.classList.remove('hidden');
+                setTimeout(() => {
+                    dialog.classList.add('scale-100', 'opacity-100');
+                    dialog.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+                
+                window.closeModal = (idx) => {
+                    dialog.classList.remove('scale-100', 'opacity-100');
+                    dialog.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        backdrop.classList.add('hidden');
+                        dialog.classList.add('hidden');
+                        resolve(buttons[idx].value);
+                    }, 200);
+                };
+            });
+        }
+
+        // Auto-dismiss toasts
+        document.querySelectorAll('.toast').forEach(toast => {
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.3s ease-out reverse';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 4000);
+        });
     </script>
 </body>
 </html>

@@ -2,7 +2,6 @@
 from config import config
 from app.extensions import db, migrate, login_manager, bcrypt
 
-# Flask app factory
 def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])

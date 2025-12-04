@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 from flask_login import current_user
 from app.extensions import db
 from app.models import UserInventory, Ingredient
+from app.utils.unit_service import convert_quantity, normalize_unit_string
 
 
 def get_user_inventory(user_id: int) -> List[UserInventory]:
@@ -37,14 +38,17 @@ def add_inventory_item(
     unit: Optional[str] = None,
     expiry_date: Optional[date] = None,
 ) -> UserInventory:
-    """Create a new inventory item for the user.
-    Note: In later iterations we may merge with existing rows of the same ingredient.
-    """
+    """Create a new inventory item for the user, normalizing quantity to the ingredient's canonical unit."""
+    ing = Ingredient.query.get(ingredient_id)
+    ing_unit_value = ing.unit.value if hasattr(ing.unit, 'value') else ing.unit
+    input_unit = normalize_unit_string(unit) if unit else ing_unit_value
+    converted_qty = convert_quantity(quantity, input_unit, ing_unit_value)
+    final_qty = converted_qty if converted_qty is not None else quantity
+
     item = UserInventory(
         user_id=user_id,
         ingredient_id=ingredient_id,
-        quantity=quantity,
-        unit=unit,
+        quantity=final_qty,
         expiry_date=expiry_date,
     )
     db.session.add(item)
