@@ -8,6 +8,7 @@ class UnitEnum(Enum):
     ml = "ml"
     g = "g"
     piece = "piece"
+    pieces = "pieces"
     tsp = "tsp"
     head = "head"
     slices = "slices"

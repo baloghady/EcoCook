@@ -2,6 +2,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
+from app.utils.unit_service import convert_quantity
 from app.models import ShoppingList, ShoppingListItem, Ingredient, UnitEnum
 
 bp = Blueprint('shopping', __name__, url_prefix='/shopping')
@@ -64,10 +65,13 @@ def add_item(list_id):
         db.session.add(ingredient)
         db.session.commit()
 
+    # Normalize entered quantity to ingredient's canonical unit for consistency with inventory
+    ing_unit_value = ingredient.unit.value if hasattr(ingredient.unit, 'value') else ingredient.unit
+    final_qty = convert_quantity(quantity, unit_str, ing_unit_value) or quantity
     new_item = ShoppingListItem(
         shopping_list_id=shopping_list.id,
         ingredient_id=ingredient.id,
-        quantity=quantity,
+        quantity=final_qty,
         is_purchased = False
     )
     db.session.add(new_item)

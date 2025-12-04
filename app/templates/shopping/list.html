@@ -4,7 +4,6 @@
 {% block content %}
 <h1 class="text-2xl font-semibold text-gray-800 mb-6">🛒 My Shopping Lists</h1>
 
-<!-- Create new list -->
 <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
     <form action="{{ url_for('shopping.create_list') }}" method="post" class="flex gap-2">
         <input type="text" name="name" placeholder="New list name"
@@ -16,7 +15,6 @@
     </form>
 </div>
 
-<!-- Shopping lists overview -->
 {% if shopping_lists %}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for list in shopping_lists %}
@@ -36,7 +34,7 @@
         {% if list.items %}
         <ul class="divide-y divide-gray-200 mb-4">
             {% for item in list.items %}
-            <li class="py-2 flex items-center justify-between">
+            <li class="py-2 flex items-center justify-between" data-list-id="{{ list.id }}" data-ingredient-id="{{ item.ingredient_id }}">
                 <div>
                     <label class="flex items-center gap-2">
                         <input type="checkbox"
@@ -44,17 +42,15 @@
                                onchange="togglePurchased({{ list.id }}, {{ item.ingredient_id }})"
                                class="rounded border-gray-300 text-green-600 focus:ring-green-500">
                         <span class="{% if item.is_purchased %}line-through text-gray-400{% endif %}">
-                            {{ item.ingredient.name|title }} - {{ item.quantity }} {{ item.ingredient.unit }}
+                            {{ item.ingredient.name|title }} - {{ item.quantity }} 
+                            {% if item.ingredient.unit.value in ['piece', 'pieces'] %}db{% else %}{{ item.ingredient.unit.value }}{% endif %}
                         </span>
                     </label>
                     {% if item.notes %}
                     <div class="text-sm text-gray-500 ml-6">{{ item.notes }}</div>
                     {% endif %}
                 </div>
-                <form method="post" action="{{ url_for('shopping.delete_item', list_id=list.id, ingredient_id=item.ingredient_id) }}"
-                      onsubmit="return confirm('Delete this item?')">
-                    <button type="submit" class="text-red-500 hover:text-red-700 text-sm">✕</button>
-                </form>
+                <button type="button" onclick="deleteItem({{ list.id }}, {{ item.ingredient_id }})" class="text-red-500 hover:text-red-700 text-sm">✕</button>
             </li>
             {% endfor %}
         </ul>
@@ -62,7 +58,6 @@
         <p class="text-gray-500 mb-4">No items yet. Add ingredients below.</p>
         {% endif %}
 
-        <!-- Add item -->
         <form method="post" action="{{ url_for('shopping.add_item', list_id=list.id) }}" class="flex gap-2 mt-auto">
             <input type="text" name="ingredient_name" placeholder="Ingredient"
                    class="border rounded-md px-2 py-1 flex-1" required>
@@ -73,13 +68,7 @@
                 <option value="kg">kg</option>
                 <option value="ml">ml</option>
                 <option value="l">l</option>
-                <option value="tbsp">tbsp</option>
-                <option value="tsp">tsp</option>
                 <option value="piece">piece</option>
-                <option value="head">head</option>
-                <option value="slices">slices</option>
-                <option value="pinch">pinch</option>
-                <option value="cloves">cloves</option>
             </select>
             <button type="submit"
                     class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-smooth">
@@ -87,11 +76,9 @@
             </button>
         </form>
 
-        <!-- Delete list -->
-        <form method="post" action="{{ url_for('shopping.delete_list', list_id=list.id) }}"
-              onsubmit="return confirm('Delete this list?')" class="mt-4 text-right">
-            <button type="submit" class="text-red-500 hover:text-red-700 text-sm">🗑 Delete List</button>
-        </form>
+        <button type="button" onclick="deleteList({{ list.id }}, '{{ list.name }}')" class="mt-4 text-red-500 hover:text-red-700 text-sm block w-full text-right">
+            🗑 Delete List
+        </button>
     </div>
     {% endfor %}
 </div>
@@ -100,11 +87,68 @@
 {% endif %}
 
 <script>
-  async function togglePurchased(listId, ingredientId) {
-    await fetch(`/shopping/${listId}/toggle/${ingredientId}`, {
-      method: 'POST',
-      headers: {'X-Requested-With': 'XMLHttpRequest'}
-    });
-  }
+    async function togglePurchased(listId, ingredientId) {
+        try {
+            const res = await fetch(`/shopping/${listId}/toggle/${ingredientId}`, {
+                method: 'POST',
+                headers: {'X-Requested-With': 'XMLHttpRequest'}
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                const row = document.querySelector(`[data-list-id="${listId}"][data-ingredient-id="${ingredientId}"]`);
+                if (row) {
+                    const span = row.querySelector('span');
+                    const checkbox = row.querySelector('input[type="checkbox"]');
+                    if (data.purchased) {
+                        span.classList.add('line-through', 'text-gray-400');
+                        if (checkbox) checkbox.checked = true;
+                    } else {
+                        span.classList.remove('line-through', 'text-gray-400');
+                        if (checkbox) checkbox.checked = false;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Toggle failed', e);
+        }
+    }
+
+    async function deleteItem(listId, ingredientId) {
+        const result = await showModal(
+            '🗑 Delete Item',
+            '<p>Are you sure you want to remove this item from your shopping list?</p>',
+            [
+                { label: 'Cancel', value: false, type: 'cancel' },
+                { label: 'Delete', value: true, type: 'confirm' }
+            ]
+        );
+        
+        if (result) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/shopping/${listId}/delete-item/${ingredientId}`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    async function deleteList(listId, listName) {
+        const result = await showModal(
+            '🗑 Delete Shopping List',
+            `<p>Are you sure you want to delete <strong>"${listName}"</strong>?</p><p class="text-sm text-gray-500 mt-2">This action cannot be undone.</p>`,
+            [
+                { label: 'Cancel', value: false, type: 'cancel' },
+                { label: 'Delete List', value: true, type: 'confirm' }
+            ]
+        );
+        
+        if (result) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/shopping/${listId}/delete`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
 </script>
 {% endblock %}

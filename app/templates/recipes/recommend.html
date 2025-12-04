@@ -6,6 +6,7 @@
 <form method="get" class="mb-6 flex gap-4 items-center">
   <label class="font-medium">Order by:</label>
   <select name="sort" class="px-3 py-2 border rounded-md">
+      <option value="weighted" {% if sort=='weighted' %}selected{% endif %}>Smart Recommendation</option>
       <option value="match" {% if sort=='match' %}selected{% endif %}>Available Ingredients</option>
       <option value="expiry" {% if sort=='expiry' %}selected{% endif %}>Less Wasted Food</option>
       <option value="rating" {% if sort=='rating' %}selected{% endif %}>Rating</option>
@@ -28,16 +29,27 @@
       <div class="mb-1">⭐ {{ rec.recipe.average_rating }} / 5</div>
       <div class="mb-1">Total Time: {{ rec.recipe.total_time }} min</div>
       <div class="mb-2">
-        {% if rec.missing_count == 0 %}
-          <span class="px-2 py-1 rounded bg-green-100 text-green-800">All ingredients available</span>
+        {% if rec.insufficient_count == 0 %}
+          <span class="px-2 py-1 rounded bg-green-100 text-green-800">All ingredients sufficient</span>
         {% else %}
-          <span class="px-2 py-1 rounded bg-red-100 text-red-800">{{ rec.missing_count }} missing</span>
+          <span class="px-2 py-1 rounded bg-red-100 text-red-800">{{ rec.insufficient_count }} insufficient</span>
         {% endif %}
       </div>
-      {% if rec.missing_count > 0 %}
+      {% if rec.insufficient_count > 0 %}
         <div class="mb-2 text-sm text-gray-700">
-          <span class="font-semibold">Missing:</span>
-          {{ rec.missing_ingredients | join(', ') }}
+          <span class="font-semibold">Insufficient:</span>
+          <ul class="mt-1 ml-4 list-disc">
+            {% for ing in rec.ingredient_status %}
+              {% if not ing.is_sufficient %}
+                <li>
+                  {{ ing.name }}: {{ '%.1f'|format(ing.available) }}{{ ing.unit_str }} available, need {{ '%.1f'|format(ing.needed) }}{{ ing.unit_str }}
+                  {% if ing.missing > 0 %}
+                    (missing {{ '%.1f'|format(ing.missing) }}{{ ing.unit_str }})
+                  {% endif %}
+                </li>
+              {% endif %}
+            {% endfor %}
+          </ul>
         </div>
       {% endif %}
       <a href="/recipes/{{ rec.recipe.id }}" class="mt-auto inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">View Details</a>
